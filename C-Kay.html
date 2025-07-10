@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-KAY AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #0a0a0a;
+            --secondary-bg: #1a1a1a;
+            --accent-bg: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --border-color: #333333;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 20px rgba(59, 130, 246, 0.3);
+            --star-color: #ffffff;
+            --star-glow: #ffffff;
+            --user-message-bg: #3b82f6;
+            --ai-message-bg: #2a2a2a;
+            --message-border: #333333;
+        }
+
+        [data-theme="light"] {
+            --primary-bg: #f8fafc;
+            --secondary-bg: #ffffff;
+            --accent-bg: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --glow: 0 0 20px rgba(59, 130, 246, 0.2);
+            --star-color: #1e293b;
+            --star-glow: #1e293b;
+            --user-message-bg: #3b82f6;
+            --ai-message-bg: #f1f5f9;
+            --message-border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--star-color);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--star-glow), 0 0 12px var(--star-glow), 0 0 18px var(--star-glow);
+            animation: moveAcrossScreen 15s linear infinite;
+        }
+
+        .star.twinkle {
+            animation: moveAndTwinkle 15s linear infinite;
+        }
+
+        .star.pulse {
+            animation: moveAndPulse 15s linear infinite;
+        }
+
+        @keyframes moveAcrossScreen {
+            0% {
+                transform: translateX(-10px) translateY(100vh);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 10px)) translateY(-10vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes moveAndTwinkle {
+            0% {
+                transform: translateX(-10px) translateY(100vh) scale(0.5);
+                opacity: 0;
+                box-shadow: 0 0 6px var(--star-glow), 0 0 12px var(--star-glow), 0 0 18px var(--star-glow);
+            }
+            5% {
+                opacity: 1;
+                transform: translateX(5vw) translateY(95vh) scale(1);
+            }
+            25% {
+                box-shadow: 0 0 10px var(--star-glow), 0 0 20px var(--star-glow), 0 0 30px var(--star-glow);
+                transform: translateX(25vw) translateY(75vh) scale(1.2);
+            }
+            50% {
+                box-shadow: 0 0 6px var(--star-glow), 0 0 12px var(--star-glow), 0 0 18px var(--star-glow);
+                transform: translateX(50vw) translateY(50vh) scale(0.8);
+            }
+            75% {
+                box-shadow: 0 0 12px var(--star-glow), 0 0 24px var(--star-glow), 0 0 36px var(--star-glow);
+                transform: translateX(75vw) translateY(25vh) scale(1.1);
+            }
+            95% {
+                opacity: 1;
+                transform: translateX(95vw) translateY(5vh) scale(1);
+            }
+            100% {
+                transform: translateX(calc(100vw + 10px)) translateY(-10vh) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes moveAndPulse {
+            0% {
+                transform: translateX(-10px) translateY(100vh);
+                opacity: 0;
+                box-shadow: 0 0 6px var(--star-glow), 0 0 12px var(--star-glow), 0 0 18px var(--star-glow);
+            }
+            5% {
+                opacity: 1;
+            }
+            20%, 60% {
+                box-shadow: 0 0 15px var(--star-glow), 0 0 30px var(--star-glow), 0 0 45px var(--star-glow);
+            }
+            40%, 80% {
+                box-shadow: 0 0 6px var(--star-glow), 0 0 12px var(--star-glow), 0 0 18px var(--star-glow);
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 10px)) translateY(-10vh);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            position: relative;
+        }
+
+        .floating-box {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .floating-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            opacity: 0.5;
+        }
+
+        .floating-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--glow);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .mic-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .mic-button {
+            width: 120px;
+            height: 120px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mic-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.3s ease;
+            border-radius: 50%;
+        }
+
+        .mic-button:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .mic-button:active {
+            transform: scale(0.95);
+        }
+
+        .mic-button.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        .mic-button.listening {
+            animation: listening 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: var(--shadow); }
+            50% { 
+                box-shadow: var(--shadow), 0 0 30px var(--success-color);
+                transform: scale(1.05);
+            }
+            100% { box-shadow: var(--shadow); }
+        }
+
+        @keyframes listening {
+            0%, 100% { 
+                box-shadow: var(--shadow);
+                filter: brightness(1);
+            }
+            50% { 
+                box-shadow: var(--shadow), 0 0 40px var(--accent-color);
+                filter: brightness(1.2);
+            }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--accent-bg);
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            animation: breathe 2s infinite;
+        }
+
+        .status-dot.active {
+            background: var(--success-color);
+        }
+
+        .status-dot.listening {
+            background: var(--accent-color);
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .chat-section {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--accent-bg);
+            border-radius: 15px 15px 0 0;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--accent-bg);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: messageSlideIn 0.3s ease-out;
+            align-items: flex-end;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+
+        .message-avatar.user {
+            background: var(--accent-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .message-avatar.ai {
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            color: white;
+        }
+
+        .message-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            max-width: 75%;
+        }
+
+        .message.user .message-content-wrapper {
+            align-items: flex-end;
+        }
+
+        .message-content {
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+            width: fit-content;
+            min-width: 0;
+        }
+
+        .message.user .message-content {
+            background: var(--user-message-bg);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai .message-content {
+            background: var(--ai-message-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--message-border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--ai-message-bg);
+            border: 1px solid var(--message-border);
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+            30% { opacity: 1; transform: scale(1); }
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0 0 15px 15px;
+            border-top: none;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-color);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--accent-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .theme-toggle, .settings-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-toggle:hover {
+            background: var(--border-color);
+            transform: rotate(180deg);
+        }
+
+        .settings-btn:hover {
+            background: var(--border-color);
+            transform: rotate(90deg);
+        }
+
+        /* Settings Dropdown */
+        .settings-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            min-width: 350px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .settings-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .settings-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 20px;
+            width: 16px;
+            height: 16px;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-right: none;
+            transform: rotate(45deg);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: var(--accent-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--border-color);
+            transform: rotate(90deg);
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .setting-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 4px;
+            background: var(--accent-bg);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .select {
+            padding: 6px 10px;
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background: var(--accent-bg);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-color);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            text-align: center;
+            gap: 15px;
+        }
+
+        .empty-chat-icon {
+            width: 48px;
+            height: 48px;
+            opacity: 0.5;
+        }
+
+        /* About Modal */
+        .about-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .about-modal.active {
+            display: flex;
+            animation: modalAppear 0.3s ease-out;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .about-content {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .about-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .about-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .about-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .about-creators {
+            background: var(--accent-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .about-creators h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .creator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .creator:last-child {
+            margin-bottom: 0;
+        }
+
+        .creator-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .creator-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .creator-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .creator-role {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .about-version {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .about-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            border: none;
+            background: var(--accent-bg);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .about-close:hover {
+            background: var(--border-color);
+            transform: rotate(90deg);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .controls {
+                gap: 10px;
+            }
+            
+            .floating-box {
+                padding: 20px;
+            }
+            
+            .mic-button {
+                width: 100px;
+                height: 100px;
+            }
+
+            .settings-dropdown {
+                right: -10px;
+                min-width: 300px;
+                padding: 20px;
+            }
+
+            .chat-section {
+                height: 400px;
+            }
+
+            .message-content-wrapper {
+                max-width: 85%;
+            }
+
+            .about-content {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            .about-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .about-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars-container" id="starsContainer"></div>
+    
+    <!-- About Modal -->
+    <div class="about-modal" id="aboutModal">
+        <div class="about-content">
+            <button class="about-close" id="aboutClose" aria-label="Close about modal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="about-logo">CK</div>
+            <h2 class="about-title">C-KAY</h2>
+            <p class="about-subtitle">Advanced AI Assistant</p>
+            <div class="about-creators">
+                <h3>Created By</h3>
+                <div class="creator">
+                    <div class="creator-avatar">CD</div>
+                    <div class="creator-info">
+                        <div class="creator-name">Calvin Delali</div>
+                        <div class="creator-role">Lead Developer & AI Architect</div>
+                    </div>
+                </div>
+                <div class="creator">
+                    <div class="creator-avatar">KA</div>
+                    <div class="creator-info">
+                        <div class="creator-name">Kwame Agyarko</div>
+                        <div class="creator-role">Co-Developer & UX Designer</div>
+                    </div>
+                </div>
+            </div>
+            <p class="about-version">Version 1.0.0 • Built with passion</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
+                        <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                        <line x1="12" x2="12" y1="19" y2="23"/>
+                        <line x1="8" x2="16" y1="23" y2="23"/>
+                    </svg>
+                </div>
+                <span>C-KAY</span>
+            </div>
+            <div class="controls">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark/light mode">
+                    <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Open settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                
+                <!-- Settings Dropdown -->
+                <div class="settings-dropdown" id="settingsDropdown">
+                    <div class="settings-header">
+                        <h3 class="settings-title">Settings</h3>
+                        <button class="close-btn" id="closeSettings" aria-label="Close settings">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Voice Sensitivity</label>
+                        <p class="setting-description">Adjust how sensitive C-KAY is to your voice</p>
+                        <div class="setting-control">
+                            <span style="font-size: 12px;">Low</span>
+                            <input type="range" class="slider" id="sensitivity" min="1" max="10" value="5">
+                            <span style="font-size: 12px;">High</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Response Speed</label>
+                        <p class="setting-description">Control how quickly C-KAY responds</p>
+                        <div class="setting-control">
+                            <select class="select" id="responseSpeed">
+                                <option value="slow">Thoughtful (3s)</option>
+                                <option value="normal" selected>Normal (2s)</option>
+                                <option value="fast">Quick (1s)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Language</label>
+                        <p class="setting-description">Select your preferred language</p>
+                        <div class="setting-control">
+                            <select class="select" id="language">
+                                <option value="en" selected>English</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="it">Italiano</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Voice Gender</label>
+                        <p class="setting-description">Choose the voice gender for responses</p>
+                        <div class="setting-control">
+                            <select class="select" id="voiceGender">
+                                <option value="female" selected>Female</option>
+                                <option value="male">Male</option>
+                                <option value="neutral">Neutral</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Voice Style</label>
+                        <p class="setting-description">Choose the speaking style</p>
+                        <div class="setting-control">
+                            <select class="select" id="voiceStyle">
+                                <option value="friendly" selected>Friendly</option>
+                                <option value="professional">Professional</option>
+                                <option value="cheerful">Cheerful</option>
+                                <option value="calm">Calm</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Auto-Clear Messages</label>
+                        <p class="setting-description">Automatically clear old messages</p>
+                        <div class="setting-control">
+                            <div class="toggle-switch" id="autoClear"></div>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Sound Effects</label>
+                        <p class="setting-description">Enable audio feedback</p>
+                        <div class="setting-control">
+                            <div class="toggle-switch active" id="soundEffects"></div>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">About</label>
+                        <p class="setting-description">Learn more about C-KAY</p>
+                        <div class="setting-control">
+                            <button class="btn btn-secondary" id="aboutBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                    <path d="M12 17h.01"/>
+                                </svg>
+                                About C-KAY
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="floating-box mic-section">
+                <h2>Voice Input</h2>
+                <button class="mic-button" id="micButton" title="Click to speak" aria-label="Start voice recording">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
+                        <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+                        <line x1="12" x2="12" y1="19" y2="23"/>
+                        <line x1="8" x2="16" y1="23" y2="23"/>
+                    </svg>
+                </button>
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Ready to listen</span>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-secondary" id="clearBtn" aria-label="Clear chat">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"/>
+                        </svg>
+                        Clear Chat
+                    </button>
+                </div>
+            </div>
+
+            <div class="floating-box chat-section">
+                <div class="chat-header">
+                    <h2>Chat with C-KAY</h2>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="message-avatar ai">CK</div>
+                        <div class="typing-content">
+                            <div class="typing-dots">
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-chat">
+                        <svg class="empty-chat-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <p>Start a conversation with C-KAY</p>
+                        <p style="font-size: 12px;">Use voice input or type a message below</p>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Type your message..."
+                        maxlength="500"
+                        aria-label="Type your message"
+                    >
+                    <button class="send-button" id="sendButton" disabled aria-label="Send message">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22,2 15,22 11,13 2,9"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CKayAssistant {
+            constructor() {
+                this.isListening = false;
+                this.currentTheme = 'dark';
+                this.messages = [];
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.backendUrl = 'http://localhost:5000';
+                this.sessionId = Math.random().toString(36).substring(2, 15);
+                this.settings = {
+                    sensitivity: 5,
+                    responseSpeed: 'normal',
+                    language: 'en',
+                    autoClear: false,
+                    soundEffects: true,
+                    voiceGender: 'female',
+                    voiceStyle: 'friendly'
+                };
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.createStars();
+                this.loadSettings();
+            }
+
+            setupEventListeners() {
+                document.getElementById('micButton').addEventListener('click', () => this.toggleListening());
+                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+                document.getElementById('settingsBtn').addEventListener('click', () => this.toggleSettings());
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearChat());
+                document.getElementById('closeSettings').addEventListener('click', () => this.hideSettings());
+                document.getElementById('aboutBtn').addEventListener('click', () => this.showAbout());
+                document.getElementById('aboutClose').addEventListener('click', () => this.hideAbout());
+                
+                // Chat input events
+                const chatInput = document.getElementById('chatInput');
+                const sendButton = document.getElementById('sendButton');
+                
+                chatInput.addEventListener('input', () => {
+                    sendButton.disabled = chatInput.value.trim() === '';
+                });
+                
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && chatInput.value.trim()) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                sendButton.addEventListener('click', () => this.sendMessage());
+                
+                // Close modals when clicking outside
+                document.addEventListener('click', (e) => {
+                    const settingsDropdown = document.getElementById('settingsDropdown');
+                    const settingsBtn = document.getElementById('settingsBtn');
+                    const aboutModal = document.getElementById('aboutModal');
+                    
+                    if (settingsDropdown && !settingsDropdown.contains(e.target) && settingsBtn && !settingsBtn.contains(e.target)) {
+                        this.hideSettings();
+                    }
+                    
+                    if (aboutModal && aboutModal.classList.contains('active') && !aboutModal.querySelector('.about-content').contains(e.target)) {
+                        this.hideAbout();
+                    }
+                });
+
+                // Settings controls
+                document.getElementById('sensitivity').addEventListener('input', (e) => {
+                    this.settings.sensitivity = parseInt(e.target.value);
+                    this.saveSettings();
+                });
+
+                document.getElementById('responseSpeed').addEventListener('change', (e) => {
+                    this.settings.responseSpeed = e.target.value;
+                    this.saveSettings();
+                });
+
+                document.getElementById('language').addEventListener('change', (e) => {
+                    this.settings.language = e.target.value;
+                    this.saveSettings();
+                });
+
+                document.getElementById('voiceGender').addEventListener('change', (e) => {
+                    this.settings.voiceGender = e.target.value;
+                    this.saveSettings();
+                });
+
+                document.getElementById('voiceStyle').addEventListener('change', (e) => {
+                    this.settings.voiceStyle = e.target.value;
+                    this.saveSettings();
+                });
+
+                document.getElementById('autoClear').addEventListener('click', () => {
+                    this.settings.autoClear = !this.settings.autoClear;
+                    document.getElementById('autoClear').classList.toggle('active');
+                    this.saveSettings();
+                });
+
+                document.getElementById('soundEffects').addEventListener('click', () => {
+                    this.settings.soundEffects = !this.settings.soundEffects;
+                    document.getElementById('soundEffects').classList.toggle('active');
+                    this.saveSettings();
+                });
+            }
+
+            createStars() {
+                const container = document.getElementById('starsContainer');
+                
+                const createStar = () => {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    
+                    const animations = ['', 'twinkle', 'pulse'];
+                    const randomAnimation = animations[Math.floor(Math.random() * animations.length)];
+                    if (randomAnimation) star.classList.add(randomAnimation);
+                    
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.animationDelay = Math.random() * 15 + 's';
+                    star.style.animationDuration = (12 + Math.random() * 6) + 's';
+                    
+                    const size = 2 + Math.random() * 3;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+                    
+                    container.appendChild(star);
+
+                    setTimeout(() => {
+                        if (star.parentNode) {
+                            star.parentNode.removeChild(star);
+                        }
+                    }, 20000);
+                };
+
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(createStar, i * 200);
+                }
+
+                setInterval(createStar, 1500);
+            }
+
+            async sendMessage() {
+                const chatInput = document.getElementById('chatInput');
+                let message = chatInput.value.trim();
+                
+                message = message.replace(/<[^>]*>?/gm, '');
+                
+                if (!message) return;
+                
+                this.addMessage('user', message);
+                chatInput.value = '';
+                document.getElementById('sendButton').disabled = true;
+                
+                this.showTypingIndicator();
+                
+                try {
+                    const response = await this.generateAIResponse(message);
+                    this.hideTypingIndicator();
+                    this.addMessage('ai', response);
+                    
+                    if (this.settings.soundEffects) {
+                        await this.synthesizeSpeech(response);
+                    }
+                } catch (error) {
+                    this.hideTypingIndicator();
+                    this.addMessage('ai', "Sorry, I encountered an error. Please try again.");
+                }
+            }
+
+            addMessage(sender, content) {
+                const chatMessages = document.getElementById('chatMessages');
+                const emptyChat = chatMessages.querySelector('.empty-chat');
+                
+                if (emptyChat) {
+                    emptyChat.remove();
+                }
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                messageDiv.innerHTML = `
+                    <div class="message-avatar ${sender}">
+                        ${sender === 'user' ? 
+                            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' : 
+                            'CK'
+                        }
+                    </div>
+                    <div class="message-content-wrapper">
+                        <div class="message-content">${content}</div>
+                        <div class="message-time">${timeString}</div>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                this.messages.push({ sender, content, timestamp: now });
+                
+                if (this.settings.autoClear && this.messages.length > 20) {
+                    this.clearOldMessages();
+                }
+            }
+
+            showTypingIndicator() {
+                document.getElementById('typingIndicator').classList.add('active');
+            }
+
+            hideTypingIndicator() {
+                document.getElementById('typingIndicator').classList.remove('active');
+            }
+
+            async generateAIResponse(text) {
+                try {
+                    const response = await fetch(`${this.backendUrl}/generate`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Session-Id': this.sessionId
+                        },
+                        body: JSON.stringify({ text })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('API request failed');
+                    }
+                    
+                    const data = await response.json();
+                    return data.response;
+                } catch (error) {
+                    console.error('Error generating response:', error);
+                    throw error;
+                }
+            }
+
+            toggleListening() {
+                if (!this.isListening) {
+                    this.startListening();
+                } else {
+                    this.stopListening();
+                }
+            }
+
+            async startListening() {
+                try {
+                    this.isListening = true;
+                    const micButton = document.getElementById('micButton');
+                    const statusDot = document.getElementById('statusDot');
+                    const statusText = document.getElementById('statusText');
+
+                    micButton.classList.add('recording');
+                    statusDot.classList.add('active');
+                    statusText.textContent = 'Listening...';
+
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.audioChunks = [];
+
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        this.audioChunks.push(event.data);
+                    };
+
+                    this.mediaRecorder.onstop = async () => {
+                        stream.getTracks().forEach(track => track.stop());
+                        await this.processAudioRecording();
+                    };
+
+                    this.mediaRecorder.start();
+                } catch (error) {
+                    console.error('Microphone access error:', error);
+                    this.stopListening();
+                    this.addMessage('ai', "I couldn't access your microphone. Please check permissions.");
+                }
+            }
+
+            stopListening() {
+                this.isListening = false;
+                const micButton = document.getElementById('micButton');
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+
+                micButton.classList.remove('recording', 'listening');
+                statusDot.classList.remove('active', 'listening');
+                statusText.textContent = 'Ready to listen';
+
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                    this.mediaRecorder.stop();
+                }
+            }
+
+            async processAudioRecording() {
+                try {
+                    const micButton = document.getElementById('micButton');
+                    const statusDot = document.getElementById('statusDot');
+                    const statusText = document.getElementById('statusText');
+
+                    micButton.classList.remove('recording');
+                    micButton.classList.add('listening');
+                    statusDot.classList.remove('active');
+                    statusDot.classList.add('listening');
+                    statusText.textContent = 'Processing...';
+
+                    const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                    
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'recording.webm');
+                    
+                    const response = await fetch(`${this.backendUrl}/transcribe`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Transcription failed');
+                    }
+                    
+                    const data = await response.json();
+                    const transcription = data.text;
+                    
+                    if (transcription) {
+                        this.addMessage('user', transcription);
+                        this.showTypingIndicator();
+                        
+                        const aiResponse = await this.generateAIResponse(transcription);
+                        this.hideTypingIndicator();
+                        this.addMessage('ai', aiResponse);
+                        
+                        if (this.settings.soundEffects) {
+                            await this.synthesizeSpeech(aiResponse);
+                        }
+                    } else {
+                        this.addMessage('ai', "I didn't catch that. Could you repeat?");
+                    }
+                    
+                    this.stopListening();
+                } catch (error) {
+                    console.error('Audio processing error:', error);
+                    this.stopListening();
+                    this.addMessage('ai', `Sorry, I had trouble processing your voice: ${error.message}`);
+                }
+            }
+
+            async synthesizeSpeech(text) {
+                try {
+                    const safeText = text.substring(0, 500);
+                    
+                    const response = await fetch(`${this.backendUrl}/synthesize`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Session-Id': this.sessionId
+                        },
+                        body: JSON.stringify({ 
+                            text: safeText,
+                            lang: this.settings.language,
+                            voiceGender: this.settings.voiceGender,
+                            voiceStyle: this.settings.voiceStyle
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Speech synthesis failed');
+                    }
+                    
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                } catch (error) {
+                    console.error('Speech synthesis error:', error);
+                }
+            }
+
+            clearChat() {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = `
+                    <div class="empty-chat">
+                        <svg class="empty-chat-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <p>Start a conversation with C-KAY</p>
+                        <p style="font-size: 12px;">Use voice input or type a message below</p>
+                    </div>
+                `;
+                this.messages = [];
+                this.hideTypingIndicator();
+            }
+
+            clearOldMessages() {
+                this.messages = this.messages.slice(-10);
+                
+                const chatMessages = document.getElementById('chatMessages');
+                const messageElements = chatMessages.querySelectorAll('.message');
+                
+                for (let i = 0; i < messageElements.length - 10; i++) {
+                    messageElements[i].remove();
+                }
+            }
+
+            toggleTheme() {
+                const body = document.body;
+                const themeIcon = document.getElementById('themeIcon');
+                
+                if (this.currentTheme === 'dark') {
+                    body.setAttribute('data-theme', 'light');
+                    themeIcon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+                    this.currentTheme = 'light';
+                } else {
+                    body.removeAttribute('data-theme');
+                    themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+                    this.currentTheme = 'dark';
+                }
+            }
+
+            toggleSettings() {
+                const dropdown = document.getElementById('settingsDropdown');
+                dropdown.classList.toggle('active');
+            }
+
+            hideSettings() {
+                document.getElementById('settingsDropdown').classList.remove('active');
+            }
+
+            showAbout() {
+                document.getElementById('aboutModal').classList.add('active');
+                this.hideSettings();
+            }
+
+            hideAbout() {
+                document.getElementById('aboutModal').classList.remove('active');
+            }
+
+            loadSettings() {
+                const saved = localStorage.getItem('ckay-settings');
+                if (saved) {
+                    this.settings = JSON.parse(saved);
+                    this.applySettings();
+                } else {
+                    this.settings = {
+                        sensitivity: 5,
+                        responseSpeed: 'normal',
+                        language: 'en',
+                        autoClear: false,
+                        soundEffects: true,
+                        voiceGender: 'female',
+                        voiceStyle: 'friendly'
+                    };
+                    this.saveSettings();
+                }
+            }
+
+            saveSettings() {
+                localStorage.setItem('ckay-settings', JSON.stringify(this.settings));
+                this.sendSettingsToBackend();
+            }
+
+            async sendSettingsToBackend() {
+                try {
+                    await fetch(`${this.backendUrl}/settings`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Session-Id': this.sessionId
+                        },
+                        body: JSON.stringify(this.settings)
+                    });
+                } catch (error) {
+                    console.error('Error saving settings to backend:', error);
+                }
+            }
+
+            applySettings() {
+                document.getElementById('sensitivity').value = this.settings.sensitivity;
+                document.getElementById('responseSpeed').value = this.settings.responseSpeed;
+                document.getElementById('language').value = this.settings.language;
+                document.getElementById('voiceGender').value = this.settings.voiceGender;
+                document.getElementById('voiceStyle').value = this.settings.voiceStyle;
+                
+                const autoClearToggle = document.getElementById('autoClear');
+                if (this.settings.autoClear) {
+                    autoClearToggle.classList.add('active');
+                } else {
+                    autoClearToggle.classList.remove('active');
+                }
+                
+                const soundEffectsToggle = document.getElementById('soundEffects');
+                if (this.settings.soundEffects) {
+                    soundEffectsToggle.classList.add('active');
+                } else {
+                    soundEffectsToggle.classList.remove('active');
+                }
+            }
+        }
+
+        // Initialize C-KAY when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.ckay = new CKayAssistant();
+        });
+    </script>
+</body>
+</html>
